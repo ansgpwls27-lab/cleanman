@@ -349,7 +349,7 @@ function renderSheet2(supply){
     '<div class="client">'+esc(state.client||" ")+'</div>'+
     '<div class="sum"><span>합계금액</span><b>'+esc(toKorean(total).replace("원정"," 원정"))+'</b><span>'+(vatIn?"(부가세 포함)":"(부가세 별도)")+'</span></div></div>'+
   '<table class="sup"><tr><td class="vert" rowspan="5">공<br>급<br>자</td><td class="lab">등록번호</td><td colspan="3">'+esc(state.s_reg)+'</td></tr>'+
-    '<tr><td class="lab">상&nbsp;&nbsp;&nbsp;&nbsp;호</td><td>'+esc(state.s_name)+'</td><td class="lab">성명</td><td>'+esc(state.s_ceo)+'</td></tr>'+
+    '<tr><td class="lab">상&nbsp;&nbsp;&nbsp;&nbsp;호</td><td>'+esc(state.s_name)+'</td><td class="lab">성명</td><td>'+stampify(state.s_ceo)+'</td></tr>'+
     '<tr><td class="lab">사 업 장</td><td colspan="3">'+esc(state.s_addr)+'</td></tr>'+
     '<tr><td class="lab">전화번호</td><td colspan="3">'+esc(state.s_tel)+'</td></tr>'+
     '<tr><td class="lab">이메일</td><td>'+esc(state.s_fax)+'</td><td class="lab">팩스</td><td>'+esc(state.s_faxno||"")+'</td></tr></table></div>'+
