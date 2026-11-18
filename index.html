@@ -168,8 +168,17 @@ label.check input{width:auto}
     </fieldset>
 
     <fieldset>
-      <legend>공급자 정보 (고정)</legend>
-      <dl class="fixed" id="fixedBox"></dl>
+      <legend>공급자 정보</legend>
+      <div class="row2">
+        <div><label for="s_reg">등록번호</label><input id="s_reg"></div>
+        <div><label for="s_name">상호</label><input id="s_name"></div>
+        <div><label for="s_ceo">대표자</label><input id="s_ceo"></div>
+        <div><label for="s_type">업태</label><input id="s_type"></div>
+        <div><label for="s_item">종목</label><input id="s_item"></div>
+        <div><label for="s_fax">이메일</label><input id="s_fax"></div>
+      </div>
+      <label for="s_addr">주소</label><input id="s_addr">
+      <button class="small" id="btnSupReset" type="button" style="margin-top:8px">사업자등록증 기본값으로</button>
       <div class="row2">
         <div><label for="s_tel">전화번호</label><input id="s_tel" placeholder="견적서에 넣을 번호"></div>
         <div><label for="s_faxno">팩스</label><input id="s_faxno" placeholder="없으면 비워 두기"></div>
@@ -177,7 +186,7 @@ label.check input{width:auto}
       <label for="stampFile">도장 이미지 (투명 PNG)</label>
       <div class="stamp-row"><img id="stampThumb" alt="" hidden><input type="file" id="stampFile" accept="image/png,image/*"><button class="small" id="stampDel" type="button" hidden>도장 빼기</button></div>
       <label class="check"><input type="checkbox" id="useStamp"> 도장 찍기</label>
-      <p class="hint">등록번호·상호·대표자·주소·업태·종목은 사업자등록증 내용으로 고정돼 있어요. 도장과 쓰던 내용은 이 컴퓨터 브라우저에만 저장되고, 다른 곳으로 보내지지 않아요.</p>
+      <p class="hint">공급자 칸은 고쳐 쓸 수 있고, 처음 값은 사업자등록증 내용이에요. 도장과 쓰던 내용은 이 컴퓨터 브라우저에만 저장되고, 다른 곳으로 보내지지 않아요.</p>
     </fieldset>
   </div>
 
@@ -227,7 +236,7 @@ var FIXED = {
   s_fax:"cleanmantax@naver.com"
 };
 var FIXED_LABELS = [["등록번호","s_reg"],["상호","s_name"],["대표자","s_ceo"],["주소","s_addr"],["업태","s_type"],["종목","s_item"],["이메일","s_fax"]];
-var EDITABLE = ["s_tel","s_faxno"];
+var EDITABLE = ["s_reg","s_name","s_ceo","s_type","s_item","s_fax","s_addr","s_tel","s_faxno"];
 var DEFAULT_STAMP="";
 var STAMP_KEY="cleanman-stamp", STAMP=DEFAULT_STAMP;
 try{ STAMP=localStorage.getItem(STAMP_KEY)||DEFAULT_STAMP; }catch(e){}
@@ -261,7 +270,7 @@ function toKorean(n){
 function korDate(s){ if(!s) return ""; var p=s.split("-"); return p[0]+"년 "+parseInt(p[1],10)+"월 "+parseInt(p[2],10)+"일"; }
 
 function showStamp(){ $("stampThumb").hidden=!STAMP; if(STAMP) $("stampThumb").src=STAMP; $("stampDel").hidden=!STAMP; }
-function applyFixed(){ for(var k in FIXED) state[k]=FIXED[k]; }
+function applyFixed(){ for(var k in FIXED) if(state[k]==null) state[k]=FIXED[k]; }
 function stampify(text){
   var t=esc(text||"");
   if(state.stamp===false || !STAMP) return t;
@@ -395,6 +404,7 @@ function bindStatic(){
     syncVatNote(); save(); bindValues(); renderItemsForm(); renderSheet();
   });
   $("btnPrint").addEventListener("click", makePdf);
+  $("btnSupReset").addEventListener("click",function(){ for(var k in FIXED){ state[k]=FIXED[k]; $(k).value=FIXED[k]; } save(); renderSheet(); });
   $("stampFile").addEventListener("change",function(e){
     var f=e.target.files&&e.target.files[0]; if(!f) return;
     var rd=new FileReader();
@@ -445,7 +455,6 @@ function fitPreview(){
 }
 
 state=load(); applyFixed();
-$("fixedBox").innerHTML=FIXED_LABELS.map(function(r){return "<dt>"+r[0]+"</dt><dd>"+esc(FIXED[r[1]])+"</dd>";}).join("");
 bindStatic(); showStamp(); renderItemsForm(); renderSheet(); fitPreview();
 window.addEventListener("resize",fitPreview);
 </script>
