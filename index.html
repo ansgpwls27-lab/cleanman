@@ -47,6 +47,13 @@ label.check{display:flex;align-items:center;gap:6px;color:var(--text);font-size:
 label.check input{width:auto}
 .in{position:relative;display:inline-block}
 .in img{position:absolute;left:calc(50% - 8mm);top:calc(50% - 8mm);width:16mm;height:16mm;max-width:none;pointer-events:none;opacity:.92}
+.save-row{display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.save-row .t{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
+.save-row .t small{display:block;color:var(--muted);font-size:11px}
+.save-row.on .t{font-weight:bold}
+.save-empty{font-size:12px;color:var(--muted);margin:2px 0 6px}
+.save-io{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.small-btn{display:inline-block;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:6px;padding:4px 8px;font-size:12px;margin:0}
 .status{font-size:12px;color:var(--muted);min-height:1.2em;margin:-6px 0 12px}
 
 /* ===== 견적서 용지 ===== */
@@ -141,8 +148,20 @@ label.check input{width:auto}
     <div class="actions">
       <button class="primary" id="btnPrint">PDF로 저장</button>
       <button id="btnNew">새로 쓰기</button>
+      <button id="btnSave" style="flex-basis:100%">이 견적서 저장</button>
     </div>
     <div class="status" id="status" role="status"></div>
+
+    <fieldset>
+      <legend>저장한 견적서</legend>
+      <div id="saveList"></div>
+      <div class="save-io">
+        <button class="small" id="btnExport" type="button">목록 파일로 받기</button>
+        <label class="small-btn" for="importFile">파일에서 불러오기</label>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </div>
+      <p class="hint">저장한 견적서는 이 컴퓨터 브라우저에 남아요. 다른 컴퓨터로 옮기려면 목록 파일로 받아서 그쪽에서 불러오세요.</p>
+    </fieldset>
 
     <fieldset>
       <legend>양식</legend>
@@ -461,13 +480,17 @@ function bindStatic(){
   });
   $("btnAdd").addEventListener("click",function(){ state.items.push(blankItem()); save(); renderItemsForm(); renderSheet(); });
   $("btnNew").addEventListener("click",function(){
-    var keep={stamp:state.stamp}; EDITABLE.forEach(function(k){keep[k]=state[k];});
+    var keep={stamp:state.stamp}; EDITABLE.forEach(function(k){ if(k.indexOf("s_")===0) keep[k]=state[k]; });
     var notes=state.notes;
     var tpl=state.tpl;
     state=defaults(); for(var k in keep) state[k]=keep[k]; applyFixed(); state.notes=notes; state.tpl=tpl;
     syncVatNote(); save(); bindValues(); renderItemsForm(); renderSheet();
   });
   $("btnPrint").addEventListener("click", makePdf);
+  $("btnSave").addEventListener("click", saveCurrent);
+  $("saveList").addEventListener("click", onSaveListClick);
+  $("btnExport").addEventListener("click", exportSaves);
+  $("importFile").addEventListener("change", importSaves);
   $("btnSupReset").addEventListener("click",function(){ for(var k in FIXED){ state[k]=FIXED[k]; $(k).value=FIXED[k]; } save(); renderSheet(); });
   $("stampFile").addEventListener("change",function(e){
     var f=e.target.files&&e.target.files[0]; if(!f) return;
@@ -476,6 +499,70 @@ function bindStatic(){
     rd.readAsDataURL(f);
   });
   $("stampDel").addEventListener("click",function(){ STAMP=DEFAULT_STAMP; try{ localStorage.removeItem(STAMP_KEY); }catch(err){} $("stampFile").value=""; showStamp(); renderSheet(); });
+}
+var SAVES_KEY="cleanman-saves", delArm=null;
+function listSaves(){ try{ var a=JSON.parse(localStorage.getItem(SAVES_KEY)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function writeSaves(a){ try{ localStorage.setItem(SAVES_KEY,JSON.stringify(a)); return true; }catch(e){ return false; } }
+function currentTotalText(){ var id={rows:"sheet2",cost:"sheet3"}[state.tpl]; if(id){ var m=$(id).innerText.match(/₩\s?([\d,]+)/); return m?"₩"+m[1]:""; } return $("p_total").textContent.replace(/\s*\(.*\)$/,""); }
+function saveCurrent(){
+  var name = state.tpl==="cost" ? (state.c_name||"") : (state.client||"");
+  if(!name.trim()){ setStatus("받는 곳(원가계산서는 용역명)을 먼저 적어 주세요. 그 이름으로 저장돼요."); return; }
+  var a=listSaves(), now=new Date();
+  if(!state._id) state._id="e"+now.getTime();
+  var tplName={basic:"기본형",rows:"항목별형",cost:"원가계산서"}[state.tpl]||"";
+  var entry={id:state._id, title:name, tpl:tplName, total:currentTotalText(), date:state.date, savedAt:now.toISOString(), data:JSON.parse(JSON.stringify(state))};
+  var i=a.findIndex(function(x){return x.id===entry.id;});
+  if(i>=0) a[i]=entry; else a.unshift(entry);
+  if(!writeSaves(a)){ setStatus("저장하지 못했어요. 브라우저 저장공간을 확인해 주세요."); return; }
+  save(); renderSaves(); setStatus((i>=0?"고친 내용을 덮어 저장했어요: ":"저장했어요: ")+name);
+}
+function fmtTime(iso){ var d=new Date(iso); if(isNaN(d)) return ""; return (d.getMonth()+1)+"/"+d.getDate()+" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
+function renderSaves(){
+  var a=listSaves();
+  if(!a.length){ $("saveList").innerHTML='<p class="save-empty">아직 저장한 견적서가 없어요. 다 쓴 뒤 "이 견적서 저장"을 누르세요.</p>'; return; }
+  $("saveList").innerHTML=a.map(function(x){
+    return '<div class="save-row'+(x.id===state._id?' on':'')+'"><div class="t">'+esc(x.title)+' · '+esc(x.total||"")+'<small>'+esc(x.tpl)+' · '+esc(korDate(x.date))+' · 저장 '+esc(fmtTime(x.savedAt))+'</small></div>'+
+      '<button class="small" data-load="'+esc(x.id)+'" type="button">불러오기</button>'+
+      '<button class="small" data-del="'+esc(x.id)+'" type="button">'+(delArm===x.id?'정말 삭제':'삭제')+'</button></div>';
+  }).join("");
+}
+function onSaveListClick(e){
+  var t=e.target, id;
+  if((id=t.getAttribute("data-load"))){
+    var x=listSaves().find(function(v){return v.id===id;}); if(!x) return;
+    state=JSON.parse(JSON.stringify(x.data)); var d=defaults(); for(var k in d) if(state[k]===undefined) state[k]=d[k]; applyFixed();
+    delArm=null; save(); bindValues(); renderItemsForm(); renderSheet(); renderSaves();
+    setStatus("불러왔어요: "+x.title+". 고친 뒤 \"이 견적서 저장\"을 누르면 덮어 저장돼요.");
+  } else if((id=t.getAttribute("data-del"))){
+    if(delArm!==id){ delArm=id; renderSaves(); return; }
+    writeSaves(listSaves().filter(function(v){return v.id!==id;}));
+    if(state._id===id) state._id=null;
+    delArm=null; save(); renderSaves(); setStatus("삭제했어요.");
+  }
+}
+async function exportSaves(){
+  var a=listSaves(); if(!a.length){ setStatus("받을 견적서가 없어요."); return; }
+  var name="cleanman-견적서목록_"+todayStr()+".json", data=JSON.stringify(a,null,1);
+  var dl=null; try{ dl=window.claude&&await window.claude.use("downloads"); }catch(e){}
+  try{
+    if(dl){ await dl.save({filename:name,data:data}); }
+    else{ var u=URL.createObjectURL(new Blob([data],{type:"application/json"})); var l=document.createElement("a"); l.href=u; l.download=name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(function(){URL.revokeObjectURL(u);},2000); }
+    setStatus("목록 파일을 받았어요: "+name);
+  }catch(e){ setStatus(e&&e.code==="declined"?"받기를 취소했어요.":"파일을 만들지 못했어요."); }
+}
+function importSaves(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var inc=JSON.parse(rd.result); if(!Array.isArray(inc)) throw 0;
+      var a=listSaves(), n=0;
+      inc.forEach(function(x){ if(!x||!x.id||!x.data) return; var i=a.findIndex(function(v){return v.id===x.id;}); if(i>=0) a[i]=x; else a.push(x); n++; });
+      writeSaves(a); renderSaves(); setStatus("견적서 "+n+"개를 불러왔어요.");
+    }catch(err){ setStatus("이 파일은 견적서 목록 파일이 아니에요."); }
+    $("importFile").value="";
+  };
+  rd.readAsText(f);
 }
 function setStatus(t){ $("status").textContent=t||""; }
 async function makePdf(){
@@ -519,7 +606,7 @@ function fitPreview(){
 }
 
 state=load(); applyFixed();
-bindStatic(); showStamp(); renderItemsForm(); renderSheet(); fitPreview();
+bindStatic(); showStamp(); renderSaves(); renderItemsForm(); renderSheet(); fitPreview();
 window.addEventListener("resize",fitPreview);
 </script>
 
