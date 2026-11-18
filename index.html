@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cleanman 견적서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f3f4f6; --panel:#ffffff; --line:#d1d5db; --text:#111827; --muted:#6b7280;
+  --accent:#1d4ed8; --accent-text:#ffffff; --head:#e5e7eb;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:"IBM Plex Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:14px}
+.app{display:grid;grid-template-columns:400px minmax(0,1fr);gap:20px;padding-block:20px;padding-left:max(20px, env(safe-area-inset-left, 0px));padding-right:max(20px, env(safe-area-inset-right, 0px));align-items:start}
+.form{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto}
+.form h1{font-size:18px;margin:0 0 4px}
+.form .sub{color:var(--muted);font-size:12px;margin:0 0 14px}
+.actions{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:6px;padding:8px 12px}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);font-weight:bold;flex:1}
+button.small{padding:4px 8px;font-size:12px}
+fieldset{border:1px solid var(--line);border-radius:8px;margin:0 0 12px;padding:10px 12px}
+legend{font-weight:bold;padding:0 4px}
+label{display:block;font-size:12px;color:var(--muted);margin:6px 0 2px}
+input,textarea,select{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--text)}
+textarea{resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.item{border:1px dashed var(--line);border-radius:6px;padding:8px;margin-bottom:8px}
+.item-head{display:flex;justify-content:space-between;align-items:center;font-weight:bold;font-size:12px}
+.item .row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
+.radio{display:flex;gap:14px;margin-top:4px}
+.radio label{display:flex;align-items:center;gap:4px;color:var(--text);font-size:13px;margin:0}
+.radio input{width:auto}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+.preview{overflow:hidden;min-width:0}
+.fixed{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:4px 0 6px;font-size:13px}
+.fixed dt{color:var(--muted)}
+.fixed dd{margin:0;min-width:0}
+.stamp-row{display:flex;gap:8px;align-items:center}
+.stamp-row input{flex:1;min-width:0}
+#stampThumb{width:40px;height:40px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:4px}
+label.check{display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px;margin-top:10px}
+label.check input{width:auto}
+.in{position:relative;display:inline-block}
+.in img{position:absolute;left:calc(50% - 8mm);top:calc(50% - 8mm);width:16mm;height:16mm;max-width:none;pointer-events:none;opacity:.92}
+.status{font-size:12px;color:var(--muted);min-height:1.2em;margin:-6px 0 12px}
+
+/* ===== 견적서 용지 ===== */
+.sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;color:#000;padding:18mm 15mm;box-shadow:0 2px 12px rgba(0,0,0,.15);
+  font-family:"Nanum Myeongjo","Batang","AppleMyungjo",serif;font-size:10pt}
+.sheet h2{text-align:center;font-size:22pt;letter-spacing:.5em;margin:0 0 8mm;font-weight:bold}
+.sheet table{border-collapse:collapse;width:100%}
+.sheet td,.sheet th{border:1px solid #000;padding:2mm 1.5mm;vertical-align:middle}
+.top{display:grid;grid-template-columns:62mm 1fr;gap:0;align-items:stretch}
+.top .left{display:flex;flex-direction:column;justify-content:space-between;padding-right:3mm}
+.top .left div{text-align:center;padding:3mm 0}
+.top .left .date{font-size:10.5pt}
+.top .left .client{font-size:14pt;font-weight:bold;border-top:1px solid #000;border-bottom:1px solid #000;padding:4mm 0}
+.top .left .say{font-size:10.5pt}
+.sup td{text-align:center;font-size:9.5pt}
+.sup .lab{background:#e7e6e6;font-weight:bold;white-space:nowrap}
+.sup .vert{background:#e7e6e6;font-weight:bold;width:7mm;line-height:1.6}
+.items{margin-top:10mm}
+.items th{background:#e7e6e6;font-weight:bold}
+.items td{text-align:center}
+.items td.name{white-space:pre-line;line-height:1.7}
+.items td.num{text-align:right}
+.items .sum td{font-weight:bold;background:#e7e6e6}
+.items .sum td.won{background:#fff}
+.vat{margin-top:2mm;text-align:right;font-size:9.5pt}
+.notes{margin-top:8mm;border:1px solid #000;padding:2mm 3mm;line-height:1.8;font-size:10pt}
+.notes .t{font-weight:normal}
+.notes ol{margin:0;padding-left:5mm}
+
+/* 항목별형 */
+.t2 .head{display:grid;grid-template-columns:1fr 95mm;gap:4mm;align-items:end}
+.t2 .head .l{display:flex;flex-direction:column;justify-content:space-between;height:100%}
+.t2 .head .l .date{text-align:center;padding-top:2mm}
+.t2 .head .l .client{text-align:center;font-size:12pt;font-weight:bold;border-bottom:1.5px solid #000;padding:6mm 0 2mm}
+.t2 .head .l .sum{display:flex;justify-content:space-between;padding:2mm 1mm 1mm;font-size:10pt}
+.t2 .head .l .sum b{letter-spacing:.1em}
+.t2 .sup td{border-width:1px;font-size:9.5pt}
+.t2 .sup{border:2px solid #000}
+.t2 .grid{margin-top:1mm;border:2px solid #000}
+.t2 .grid th{background:#fff;font-weight:bold;padding:1.4mm}
+.t2 .grid td{padding:1.2mm 1.5mm;height:6.2mm;text-align:center}
+.t2 .grid td.num{text-align:right}
+.t2 .grid td.no{width:10mm}
+.t2 .tot td{height:7mm}
+.t2 .tot .k{letter-spacing:.9em;text-align:center}
+.t2 .foot{display:flex;justify-content:space-between;align-items:flex-start;margin-top:1.5mm;font-size:9pt}
+.t2 .seal{font-size:14pt;font-weight:bold;margin-top:3mm}
+
+@media (max-width:1100px){
+  .app{grid-template-columns:minmax(0,1fr);padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+  .form{position:static;max-height:none}
+  .sheet{transform-origin:top left}
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#111827;--panel:#1f2937;--line:#374151;--text:#f3f4f6;--muted:#9ca3af;--head:#374151;color-scheme:dark}
+  :root:not([data-theme="light"]) input,:root:not([data-theme="light"]) textarea,:root:not([data-theme="light"]) select,:root:not([data-theme="light"]) button:not(.primary){background:#111827;color:var(--text)}
+}
+:root[data-theme="dark"]{--bg:#111827;--panel:#1f2937;--line:#374151;--text:#f3f4f6;--muted:#9ca3af;--head:#374151;color-scheme:dark}
+:root[data-theme="dark"] input,:root[data-theme="dark"] textarea,:root[data-theme="dark"] button:not(.primary){background:#111827;color:var(--text)}
+
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .form{display:none}
+  .app{display:block;padding:0}
+  .sheet{box-shadow:none;margin:0;transform:none!important;min-height:0;height:296mm;overflow:hidden}
+  .preview{height:auto!important}
+}
+#gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+#gate form{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
+#gate h1{font-size:18px;margin:0}
+#gate p{margin:0;font-size:12px;color:var(--muted)}
+#gateErr{color:#b91c1c;font-size:12px;min-height:1em}
+</style>
+</head>
+<body>
+<div id="gate"><form id="gateForm"><h1>Cleanman 견적서</h1><p>비밀번호를 넣어 주세요.</p><input type="password" id="gatePw" autocomplete="current-password"><div id="gateErr" role="alert"></div><button class="primary" type="submit">들어가기</button></form></div>
+<div class="app">
+  <div class="form">
+    <h1>Cleanman 견적서</h1>
+    <p class="sub">칸을 채우면 견적서가 바로 바뀌어요. 다 되면 PDF로 저장을 누르세요.</p>
+    <div class="actions">
+      <button class="primary" id="btnPrint">PDF로 저장</button>
+      <button id="btnNew">새로 쓰기</button>
+    </div>
+    <div class="status" id="status" role="status"></div>
+
+    <fieldset>
+      <legend>양식</legend>
+      <div class="radio">
+        <label><input type="radio" name="tpl" value="basic" checked> 기본형 (특기사항)</label>
+        <label><input type="radio" name="tpl" value="rows"> 항목별형 (번호 20줄)</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>견적 기본</legend>
+      <div class="row2">
+        <div><label>작성일</label><input type="date" id="date"></div>
+        <div><label>받는 곳</label><input id="client" placeholder="예: BGF 광주"></div>
+      </div>
+      <label>부가세</label>
+      <div class="radio">
+        <label><input type="radio" name="vat" value="ex" checked> 별도</label>
+        <label><input type="radio" name="vat" value="in"> 포함 (10% 더함)</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>품목</legend>
+      <div id="items"></div>
+      <button class="small" id="btnAdd">+ 품목 추가</button>
+      <p class="hint">품명은 줄바꿈하면 견적서에도 줄이 나뉘어요(항목별형은 한 줄 = 번호 한 칸). 공급가는 수량 × 단가로 자동 계산돼요.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend id="notesLegend">특기사항 (한 줄에 하나)</legend>
+      <textarea id="notes" rows="6"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>공급자 정보 (고정)</legend>
+      <dl class="fixed" id="fixedBox"></dl>
+      <div class="row2">
+        <div><label for="s_tel">전화번호</label><input id="s_tel" placeholder="견적서에 넣을 번호"></div>
+        <div><label for="s_faxno">팩스</label><input id="s_faxno" placeholder="없으면 비워 두기"></div>
+      </div>
+      <label for="stampFile">도장 이미지 (투명 PNG)</label>
+      <div class="stamp-row"><img id="stampThumb" alt="" hidden><input type="file" id="stampFile" accept="image/png,image/*"><button class="small" id="stampDel" type="button" hidden>도장 빼기</button></div>
+      <label class="check"><input type="checkbox" id="useStamp"> 도장 찍기</label>
+      <p class="hint">등록번호·상호·대표자·주소·업태·종목은 사업자등록증 내용으로 고정돼 있어요. 도장과 쓰던 내용은 이 컴퓨터 브라우저에만 저장되고, 다른 곳으로 보내지지 않아요.</p>
+    </fieldset>
+  </div>
+
+  <div class="preview">
+    <div class="sheet" id="sheet2" style="display:none"></div>
+    <div class="sheet" id="sheet">
+      <h2>견 적 서</h2>
+      <div class="top">
+        <div class="left">
+          <div class="date" id="p_date"></div>
+          <div class="client" id="p_client"></div>
+          <div class="say">아래와 같이 견적합니다.</div>
+        </div>
+        <table class="sup">
+          <tr><td class="vert" rowspan="6">공<br>급<br>자</td><td class="lab">등록번호</td><td colspan="3" id="p_reg"></td></tr>
+          <tr><td class="lab">상&nbsp;&nbsp;&nbsp;&nbsp;호</td><td id="p_name"></td><td class="lab">성명</td><td id="p_ceo"></td></tr>
+          <tr><td class="lab">주&nbsp;&nbsp;&nbsp;&nbsp;소</td><td colspan="3" id="p_addr"></td></tr>
+          <tr><td class="lab">업&nbsp;&nbsp;&nbsp;&nbsp;태</td><td id="p_type"></td><td class="lab">종목</td><td id="p_item"></td></tr>
+          <tr><td class="lab">전화번호</td><td colspan="3" id="p_tel"></td></tr>
+          <tr><td class="lab">이메일</td><td id="p_fax"></td><td class="lab">팩스</td><td id="p_faxno"></td></tr>
+        </table>
+      </div>
+
+      <table class="items">
+        <colgroup><col style="width:27%"><col style="width:11%"><col style="width:9%"><col style="width:16%"><col style="width:20%"><col style="width:17%"></colgroup>
+        <tr class="sum"><td>합계금액</td><td colspan="3" class="won" id="p_korean"></td><td colspan="2" class="won" id="p_total"></td></tr>
+        <tr><th>품&nbsp;&nbsp;&nbsp;명</th><th>규 격</th><th>수량</th><th>단&nbsp;&nbsp;&nbsp;가</th><th>공 급 가</th><th>비&nbsp;&nbsp;&nbsp;고</th></tr>
+        <tbody id="p_items"></tbody>
+      </table>
+      <div class="vat" id="p_vat"></div>
+
+      <div class="notes" id="p_notes_box">
+        <div class="t">특기사항</div>
+        <ol id="p_notes"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+var FIXED = {
+  s_reg:"122-88-03789", s_name:"㈜청미남크린", s_ceo:"이향미 (인)",
+  s_type:"서비스", s_item:"건물청소용역",
+  s_addr:"서울특별시 중랑구 동일로 873, 3층 302호(묵동)",
+  s_fax:"cleanmantax@naver.com"
+};
+var FIXED_LABELS = [["등록번호","s_reg"],["상호","s_name"],["대표자","s_ceo"],["주소","s_addr"],["업태","s_type"],["종목","s_item"],["이메일","s_fax"]];
+var EDITABLE = ["s_tel","s_faxno"];
+var DEFAULT_STAMP="";
+var STAMP_KEY="cleanman-stamp", STAMP=DEFAULT_STAMP;
+try{ STAMP=localStorage.getItem(STAMP_KEY)||DEFAULT_STAMP; }catch(e){}
+var DEFAULT_NOTES = [
+  "청소시기 : 협의 후 진행",
+  "VAT(부가세) 별도",
+  "이외 명시안된 사항은 별도입니다.",
+  "입금 계좌번호 : ",
+  "담당자 문원주 H.P : 010-2074-4620"
+].join("\n");
+var KEY = "estimate-maker-v2";
+
+function $(id){ return document.getElementById(id); }
+function todayStr(){ var d=new Date(); var m=("0"+(d.getMonth()+1)).slice(-2), dd=("0"+d.getDate()).slice(-2); return d.getFullYear()+"-"+m+"-"+dd; }
+function num(v){ var n=parseFloat(String(v||"").replace(/[^0-9.\-]/g,"")); return isNaN(n)?0:n; }
+function comma(n){ return Math.round(n).toLocaleString("ko-KR"); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+function toKorean(n){
+  n=Math.round(n); if(n<=0) return "영원정";
+  var digits=["","일","이","삼","사","오","육","칠","팔","구"], small=["","십","백","천"], big=["","만","억","조"];
+  var out="", g=0;
+  while(n>0){
+    var part=n%10000, s="";
+    for(var i=0;i<4;i++){ var d=Math.floor(part/Math.pow(10,i))%10; if(d) s=digits[d]+small[i]+s; }
+    if(s) out=s+big[g]+out;
+    n=Math.floor(n/10000); g++;
+  }
+  return out+"원정";
+}
+function korDate(s){ if(!s) return ""; var p=s.split("-"); return p[0]+"년 "+parseInt(p[1],10)+"월 "+parseInt(p[2],10)+"일"; }
+
+function showStamp(){ $("stampThumb").hidden=!STAMP; if(STAMP) $("stampThumb").src=STAMP; $("stampDel").hidden=!STAMP; }
+function applyFixed(){ for(var k in FIXED) state[k]=FIXED[k]; }
+function stampify(text){
+  var t=esc(text||"");
+  if(state.stamp===false || !STAMP) return t;
+  var mark='<span class="in">(인)<img src="'+STAMP+'" alt=""></span>';
+  return t.indexOf("(인)")>=0 ? t.replace("(인)",mark) : t+" "+mark;
+}
+var state;
+function blankItem(){ return {name:"",spec:"",qty:"",price:"",note:""}; }
+function defaults(){
+  return {tpl:"basic", date:todayStr(), client:"", vat:"ex", items:[blankItem()], notes:DEFAULT_NOTES, s_tel:"", s_faxno:"", stamp:true};
+}
+function load(){
+  try{ var raw=localStorage.getItem(KEY); if(raw){ var s=JSON.parse(raw); var d=defaults(); for(var k in d) if(s[k]===undefined) s[k]=d[k]; return s; } }catch(e){}
+  return defaults();
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+function renderItemsForm(){
+  var box=$("items"); box.innerHTML="";
+  state.items.forEach(function(it,i){
+    var el=document.createElement("div"); el.className="item";
+    el.innerHTML='<div class="item-head"><span>품목 '+(i+1)+'</span>'+(state.items.length>1?'<button class="small" data-del="'+i+'">삭제</button>':'')+'</div>'+
+      '<label>품명</label><textarea rows="3" data-k="name" data-i="'+i+'">'+esc(it.name)+'</textarea>'+
+      '<div class="row4"><div><label>규격</label><input data-k="spec" data-i="'+i+'" value="'+esc(it.spec)+'"></div>'+
+      '<div><label>수량</label><input inputmode="numeric" data-k="qty" data-i="'+i+'" value="'+esc(it.qty)+'"></div>'+
+      '<div><label>단가</label><input inputmode="numeric" data-k="price" data-i="'+i+'" value="'+esc(it.price)+'"></div>'+
+      '<div><label>비고</label><input data-k="note" data-i="'+i+'" value="'+esc(it.note)+'"></div></div>';
+    box.appendChild(el);
+  });
+}
+
+function renderSheet(){
+  $("p_date").textContent=korDate(state.date);
+  $("p_client").textContent=state.client||" ";
+  ["reg","name","tel","type","item","fax","faxno","addr"].forEach(function(k){ $("p_"+k).textContent=state["s_"+k]; });
+  $("p_ceo").innerHTML=stampify(state.s_ceo);
+
+  var supply=0, rows="";
+  state.items.forEach(function(it){
+    var q=num(it.qty), p=num(it.price), amt=q*p; supply+=amt;
+    rows+='<tr><td class="name">'+esc(it.name)+'</td><td>'+esc(it.spec)+'</td><td>'+(it.qty?esc(it.qty):"")+'</td>'+
+      '<td class="num">'+(p?comma(p):"")+'</td><td class="num">'+(amt?comma(amt):"")+'</td><td>'+esc(it.note)+'</td></tr>';
+  });
+  var minRows=Math.max(0,3-state.items.length);
+  for(var i=0;i<minRows;i++) rows+='<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  $("p_items").innerHTML=rows;
+
+  var vat = state.vat==="in" ? Math.round(supply*0.1) : 0;
+  var total = supply+vat;
+  $("p_korean").textContent=toKorean(total);
+  $("p_total").textContent="₩"+comma(total)+(state.vat==="in"?" (부가세 포함)":" (부가세 별도)");
+  $("p_vat").textContent = state.vat==="in" ? ("공급가액 ₩"+comma(supply)+"  /  부가세 ₩"+comma(vat)+"  /  합계 ₩"+comma(total)) : "";
+
+  var lines=(state.notes||"").split("\n").filter(function(l){return l.trim();});
+  $("p_notes").innerHTML=lines.map(function(l){return "<li>"+esc(l)+"</li>";}).join("");
+  $("p_notes_box").style.display=lines.length?"":"none";
+
+  renderSheet2(supply);
+  var rowsTpl = state.tpl==="rows";
+  $("sheet").style.display = rowsTpl ? "none" : "";
+  $("sheet2").style.display = rowsTpl ? "" : "none";
+  $("notesLegend").textContent = rowsTpl ? "비고 (한 줄에 하나)" : "특기사항 (한 줄에 하나)";
+  fitPreview();
+}
+
+function renderSheet2(supply){
+  var vatIn = state.vat==="in";
+  var vat = vatIn ? Math.round(supply*0.1) : 0, total = supply+vat;
+  var body="", n=0;
+  state.items.forEach(function(it){
+    var q=num(it.qty), p=num(it.price), amt=q*p;
+    var names=String(it.name||"").split("\n"); if(!names.length) names=[""];
+    names.forEach(function(nm,j){
+      n++;
+      var first = j===0;
+      body+='<tr><td class="no">'+n+'</td><td>'+esc(nm)+'</td><td>'+(first?esc(it.spec):"")+'</td><td>'+(first&&it.qty?esc(it.qty):"")+'</td>'+
+        '<td class="num">'+(first&&p?comma(p):"")+'</td><td class="num">'+(first&&amt?comma(amt):"")+'</td></tr>';
+    });
+  });
+  for(n=n+1;n<=20;n++) body+='<tr><td class="no">'+n+'</td><td></td><td></td><td></td><td></td><td></td></tr>';
+  var notes=(state.notes||"").split("\n").filter(function(l){return l.trim();}).map(esc).join("<br>");
+  $("sheet2").innerHTML =
+  '<div class="t2"><h2>견 적 서</h2>'+
+  '<div class="head"><div class="l"><div class="date">'+esc(korDate(state.date))+'</div>'+
+    '<div class="client">'+esc(state.client||" ")+'</div>'+
+    '<div class="sum"><span>합계금액</span><b>'+esc(toKorean(total).replace("원정"," 원정"))+'</b><span>'+(vatIn?"(부가세 포함)":"(부가세 별도)")+'</span></div></div>'+
+  '<table class="sup"><tr><td class="vert" rowspan="5">공<br>급<br>자</td><td class="lab">등록번호</td><td colspan="3">'+esc(state.s_reg)+'</td></tr>'+
+    '<tr><td class="lab">상&nbsp;&nbsp;&nbsp;&nbsp;호</td><td>'+esc(state.s_name)+'</td><td class="lab">성명</td><td>'+esc(state.s_ceo)+'</td></tr>'+
+    '<tr><td class="lab">사 업 장</td><td colspan="3">'+esc(state.s_addr)+'</td></tr>'+
+    '<tr><td class="lab">전화번호</td><td colspan="3">'+esc(state.s_tel)+'</td></tr>'+
+    '<tr><td class="lab">이메일</td><td>'+esc(state.s_fax)+'</td><td class="lab">팩스</td><td>'+esc(state.s_faxno||"")+'</td></tr></table></div>'+
+  '<table class="grid"><colgroup><col style="width:9%"><col style="width:31%"><col style="width:11%"><col style="width:9%"><col style="width:18%"><col style="width:22%"></colgroup>'+
+    '<tr><th>번호</th><th>품&nbsp;&nbsp;&nbsp;&nbsp;명</th><th>규격</th><th>수량</th><th>단&nbsp;&nbsp;&nbsp;&nbsp;가</th><th>공급가액</th></tr>'+ body +
+    '<tr class="tot"><td rowspan="3" style="vertical-align:top">비고 :</td><td rowspan="3" style="text-align:left;vertical-align:top;font-size:9pt">'+notes+'</td>'+
+      '<td colspan="3" class="k">공급가액</td><td class="num">₩ '+comma(supply)+'</td></tr>'+
+    '<tr class="tot"><td colspan="3" class="k" style="letter-spacing:.3em">세액(부가가치세)</td><td class="num">'+(vatIn?"₩ "+comma(vat):"별도")+'</td></tr>'+
+    '<tr class="tot"><td colspan="3" class="k">합계금액</td><td class="num"><b>₩ '+comma(total)+'</b></td></tr>'+
+  '</table>'+
+  '<div class="foot"><span></span><span class="seal">'+stampify(state.s_name+' (인)')+'</span></div></div>';
+}
+
+function bindStatic(){
+  $("useStamp").checked=state.stamp!==false;
+  $("useStamp").addEventListener("change",function(){ state.stamp=$("useStamp").checked; save(); renderSheet(); });
+  ["date","client","notes"].concat(EDITABLE).forEach(function(id){
+    var el=$(id); el.value=state[id];
+    el.addEventListener("input",function(){ state[id]=el.value; save(); renderSheet(); });
+  });
+  document.querySelectorAll('input[name="vat"]').forEach(function(r){
+    r.checked = r.value===state.vat;
+    r.addEventListener("change",function(){ state.vat=r.value; syncVatNote(); save(); renderSheet(); });
+  });
+  document.querySelectorAll('input[name="tpl"]').forEach(function(r){
+    r.checked = r.value===state.tpl;
+    r.addEventListener("change",function(){ state.tpl=r.value; save(); renderSheet(); });
+  });
+  $("items").addEventListener("input",function(e){
+    var k=e.target.getAttribute("data-k"); if(!k) return;
+    state.items[+e.target.getAttribute("data-i")][k]=e.target.value; save(); renderSheet();
+  });
+  $("items").addEventListener("click",function(e){
+    var d=e.target.getAttribute("data-del"); if(d===null) return;
+    state.items.splice(+d,1); save(); renderItemsForm(); renderSheet();
+  });
+  $("btnAdd").addEventListener("click",function(){ state.items.push(blankItem()); save(); renderItemsForm(); renderSheet(); });
+  $("btnNew").addEventListener("click",function(){
+    var keep={stamp:state.stamp}; EDITABLE.forEach(function(k){keep[k]=state[k];});
+    var notes=state.notes;
+    var tpl=state.tpl;
+    state=defaults(); for(var k in keep) state[k]=keep[k]; applyFixed(); state.notes=notes; state.tpl=tpl;
+    syncVatNote(); save(); bindValues(); renderItemsForm(); renderSheet();
+  });
+  $("btnPrint").addEventListener("click", makePdf);
+  $("stampFile").addEventListener("change",function(e){
+    var f=e.target.files&&e.target.files[0]; if(!f) return;
+    var rd=new FileReader();
+    rd.onload=function(){ STAMP=rd.result; try{ localStorage.setItem(STAMP_KEY,STAMP); }catch(err){ setStatus("도장을 이 브라우저에 저장하지 못했어요. 이번 작성에만 쓰여요."); } state.stamp=true; $("useStamp").checked=true; save(); showStamp(); renderSheet(); };
+    rd.readAsDataURL(f);
+  });
+  $("stampDel").addEventListener("click",function(){ STAMP=DEFAULT_STAMP; try{ localStorage.removeItem(STAMP_KEY); }catch(err){} $("stampFile").value=""; showStamp(); renderSheet(); });
+}
+function setStatus(t){ $("status").textContent=t||""; }
+async function makePdf(){
+  var btn=$("btnPrint"); btn.disabled=true; setStatus("PDF 만드는 중…");
+  var id=state.tpl==="rows"?"sheet2":"sheet", sheet=$(id), wrap=sheet.parentNode;
+  var oldT=sheet.style.transform, oldH=wrap.style.height;
+  try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    sheet.style.transform=""; wrap.style.height="";
+    var canvas=await html2canvas(sheet,{scale:2,backgroundColor:"#ffffff",useCORS:true,windowWidth:sheet.scrollWidth});
+    var pdf=new window.jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
+    var w=210, h=canvas.height*w/canvas.width;
+    pdf.addImage(canvas.toDataURL("image/jpeg",0.95),"JPEG",0,0,w,Math.min(h,297));
+    var name="견적서_"+(state.client||"").replace(/[\\/:*?"<>|\s]+/g,"")+"_"+state.date+".pdf";
+    pdf.save(name);
+    setStatus("PDF를 저장했어요: "+name);
+  }catch(e){
+    var c=e&&e.code;
+    setStatus(c==="declined"?"저장을 취소했어요.":c==="rate_limited"?"저장 창이 이미 떠 있어요. 잠시 뒤 다시 눌러 주세요.":"PDF를 만들지 못했어요. 다시 눌러 주세요.");
+  }finally{
+    sheet.style.transform=oldT; wrap.style.height=oldH; btn.disabled=false; fitPreview();
+  }
+}
+function bindValues(){
+  ["date","client","notes"].concat(EDITABLE).forEach(function(id){ $(id).value=state[id]; });
+  $("useStamp").checked=state.stamp!==false;
+  document.querySelectorAll('input[name="vat"]').forEach(function(r){ r.checked = r.value===state.vat; });
+  document.querySelectorAll('input[name="tpl"]').forEach(function(r){ r.checked = r.value===state.tpl; });
+}
+function syncVatNote(){
+  var want = state.vat==="in" ? "VAT(부가세) 포함" : "VAT(부가세) 별도";
+  state.notes = (state.notes||"").replace(/VAT\(부가세\) (별도|포함)/, want);
+  $("notes").value = state.notes;
+}
+
+function fitPreview(){
+  var sheet=$(state.tpl==="rows"?"sheet2":"sheet"), wrap=sheet.parentNode;
+  sheet.style.transform=""; wrap.style.height="";
+  var avail=wrap.clientWidth, w=sheet.offsetWidth;
+  if(avail<w){ var s=avail/w; sheet.style.transform="scale("+s+")"; sheet.style.transformOrigin="top left"; wrap.style.height=(sheet.offsetHeight*s)+"px"; }
+}
+
+state=load(); applyFixed();
+$("fixedBox").innerHTML=FIXED_LABELS.map(function(r){return "<dt>"+r[0]+"</dt><dd>"+esc(FIXED[r[1]])+"</dd>";}).join("");
+bindStatic(); showStamp(); renderItemsForm(); renderSheet(); fitPreview();
+window.addEventListener("resize",fitPreview);
+</script>
+
+<script>
+(function(){
+  var H="489cba7fc46b07e85b07b1b5e75fd64ae5c5f7e4dc23bbfa8471eb097205b82f", OK="cleanman-ok";
+  var ok=false; try{ ok=localStorage.getItem(OK)===H; }catch(e){}
+  if(ok){ document.getElementById("gate").remove(); return; }
+  document.getElementById("gatePw").focus();
+  document.getElementById("gateForm").addEventListener("submit",async function(e){
+    e.preventDefault();
+    var v=document.getElementById("gatePw").value;
+    var buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("cleanman:"+v));
+    var hex=Array.from(new Uint8Array(buf)).map(function(b){return ("0"+b.toString(16)).slice(-2);}).join("");
+    if(hex===H){ try{ localStorage.setItem(OK,H); }catch(err){} document.getElementById("gate").remove(); }
+    else{ document.getElementById("gateErr").textContent="비밀번호가 맞지 않아요."; }
+  });
+})();
+</script>
+</body>
+</html>
