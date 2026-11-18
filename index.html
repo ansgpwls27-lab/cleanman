@@ -83,6 +83,42 @@ label.check input{width:auto}
 .notes .t{font-weight:normal}
 .notes ol{margin:0;padding-left:5mm}
 
+/* 간결형 */
+.t4 .bar{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #000;padding-bottom:3mm;margin-bottom:6mm}
+.t4 .bar h2{margin:0;letter-spacing:.3em;text-align:left}
+.t4 .bar .d{font-size:10pt}
+.t4 .two{display:grid;grid-template-columns:1fr 1fr;gap:8mm;margin-bottom:6mm;font-size:9.5pt;line-height:1.75}
+.t4 .two .h{font-weight:bold;border-bottom:1px solid #000;margin-bottom:1.5mm;padding-bottom:1mm}
+.t4 .to{font-size:14pt;font-weight:bold}
+.t4 .big{border:1.5px solid #000;padding:3mm 4mm;display:flex;justify-content:space-between;align-items:center;margin-bottom:5mm;font-size:11pt}
+.t4 .big b{font-size:14pt}
+.t4 table th{background:#f0f0f0;border-left:0;border-right:0;border-top:1.5px solid #000;border-bottom:1px solid #000;padding:2mm}
+.t4 table td{border-left:0;border-right:0;border-top:0;border-bottom:1px solid #bbb;padding:2mm;text-align:center}
+.t4 table td.l{text-align:left;white-space:pre-line}
+.t4 table td.num{text-align:right}
+.t4 .tot{margin-left:auto;width:75mm;margin-top:3mm;font-size:10pt}
+.t4 .tot div{display:flex;justify-content:space-between;padding:1.2mm 0;border-bottom:1px solid #ddd}
+.t4 .tot div:last-child{border-bottom:2px solid #000;font-weight:bold}
+.t4 .nt{margin-top:7mm;font-size:9.5pt;line-height:1.8}
+.t4 .sign{margin-top:10mm;text-align:right;font-size:12pt;font-weight:bold}
+/* 세액분리형 */
+.t5 h2{margin-bottom:5mm}
+.t5 .boxes{display:grid;grid-template-columns:1fr 1.25fr;gap:0;border:2px solid #000}
+.t5 .boxes table td{font-size:9pt;padding:1.6mm 1.2mm;text-align:center}
+.t5 .boxes table{height:100%}
+.t5 .boxes .lab{background:#eef3f8;font-weight:bold;white-space:nowrap}
+.t5 .boxes .vert{background:#eef3f8;font-weight:bold;width:7mm;line-height:1.5}
+.t5 .sumline{margin:4mm 0 2mm;border:2px solid #000;display:grid;grid-template-columns:30mm 1fr 45mm;font-size:10.5pt}
+.t5 .sumline div{padding:2.5mm;border-right:1px solid #000;text-align:center}
+.t5 .sumline div:first-child{background:#eef3f8;font-weight:bold}
+.t5 .sumline div:last-child{border-right:0;font-weight:bold}
+.t5 .grid{border:2px solid #000}
+.t5 .grid th{background:#eef3f8;padding:1.6mm}
+.t5 .grid td{height:6.6mm;padding:1.2mm 1.5mm;text-align:center}
+.t5 .grid td.num{text-align:right}
+.t5 .grid td.l{text-align:left}
+.t5 .grid .ft td{background:#eef3f8;font-weight:bold}
+.t5 .nt{margin-top:4mm;border:1px solid #000;padding:2mm 3mm;font-size:9.5pt;line-height:1.7}
 /* 원가계산서 */
 .t3 h2{text-decoration:underline;text-underline-offset:2mm;margin-bottom:6mm}
 .t3 .meta{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.5mm;font-size:10pt}
@@ -168,6 +204,8 @@ label.check input{width:auto}
       <div class="radio">
         <label><input type="radio" name="tpl" value="basic" checked> 기본형 (특기사항)</label>
         <label><input type="radio" name="tpl" value="rows"> 항목별형 (번호 20줄)</label>
+        <label><input type="radio" name="tpl" value="simple"> 간결형</label>
+        <label><input type="radio" name="tpl" value="split"> 세액분리형</label>
         <label><input type="radio" name="tpl" value="cost"> 원가계산서</label>
       </div>
     </fieldset>
@@ -238,6 +276,8 @@ label.check input{width:auto}
   <div class="preview">
     <div class="sheet" id="sheet2" style="display:none"></div>
     <div class="sheet" id="sheet3" style="display:none"></div>
+    <div class="sheet" id="sheet4" style="display:none"></div>
+    <div class="sheet" id="sheet5" style="display:none"></div>
     <div class="sheet" id="sheet">
       <h2>견 적 서</h2>
       <div class="top">
@@ -284,6 +324,7 @@ var FIXED = {
 var FIXED_LABELS = [["등록번호","s_reg"],["상호","s_name"],["대표자","s_ceo"],["주소","s_addr"],["업태","s_type"],["종목","s_item"],["이메일","s_fax"]];
 var EDITABLE = ["s_reg","s_name","s_ceo","s_type","s_item","s_fax","s_addr","s_tel","s_faxno","c_name","c_mat","c_imat","c_scrap","c_lab","c_ilabr","c_mach","c_profr"];
 var DEFAULT_STAMP="";
+var SHEET_ID={basic:"sheet",rows:"sheet2",cost:"sheet3",simple:"sheet4",split:"sheet5"};
 var STAMP_KEY="cleanman-stamp", STAMP=DEFAULT_STAMP;
 try{ STAMP=localStorage.getItem(STAMP_KEY)||DEFAULT_STAMP; }catch(e){}
 var DEFAULT_NOTES = [
@@ -375,11 +416,10 @@ function renderSheet(){
   $("p_notes_box").style.display=lines.length?"":"none";
 
   renderSheet2(supply);
-  renderSheet3();
+  renderSheet3(); renderSheet4(); renderSheet5();
   var rowsTpl = state.tpl==="rows", costTpl = state.tpl==="cost";
-  $("sheet").style.display = (rowsTpl||costTpl) ? "none" : "";
-  $("sheet2").style.display = rowsTpl ? "" : "none";
-  $("sheet3").style.display = costTpl ? "" : "none";
+  var cur = SHEET_ID[state.tpl]||"sheet";
+  ["sheet","sheet2","sheet3","sheet4","sheet5"].forEach(function(id){ $(id).style.display = id===cur ? "" : "none"; });
   $("costBox").hidden = !costTpl;
   $("itemsBox").hidden = costTpl;
   $("notes").parentNode.hidden = costTpl;
@@ -387,6 +427,52 @@ function renderSheet(){
   fitPreview();
 }
 
+function itemCalc(){
+  return state.items.map(function(it){ var q=num(it.qty), p=num(it.price); return {it:it,q:q,p:p,amt:q*p}; });
+}
+function notesList(){ return (state.notes||"").split("\n").filter(function(l){return l.trim();}); }
+function renderSheet4(){
+  var rows=itemCalc(), supply=0; rows.forEach(function(r){supply+=r.amt;});
+  var vatIn=state.vat==="in", vat=vatIn?Math.round(supply*0.1):0, total=supply+vat;
+  var body=rows.map(function(r,i){ return '<tr><td>'+(i+1)+'</td><td class="l">'+esc(r.it.name)+'</td><td>'+esc(r.it.spec)+'</td><td>'+(r.it.qty?esc(r.it.qty):"")+'</td><td class="num">'+(r.p?comma(r.p):"")+'</td><td class="num">'+(r.amt?comma(r.amt):"")+'</td><td>'+esc(r.it.note)+'</td></tr>'; }).join("");
+  for(var i=rows.length;i<8;i++) body+='<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+  var nl=notesList();
+  $("sheet4").innerHTML='<div class="t4"><div class="bar"><h2>견 적 서</h2><span class="d">'+esc(korDate(state.date))+'</span></div>'+
+    '<div class="two"><div><div class="h">받는 곳</div><div class="to">'+esc(state.client||" ")+' 귀하</div><div>아래와 같이 견적합니다.</div></div>'+
+    '<div><div class="h">공급자</div>'+esc(state.s_name)+' · 대표 '+stampify(state.s_ceo)+'<br>등록번호 '+esc(state.s_reg)+'<br>'+esc(state.s_addr)+'<br>'+esc(state.s_type)+' / '+esc(state.s_item)+'<br>'+
+      (state.s_tel?'전화 '+esc(state.s_tel)+' · ':'')+esc(state.s_fax)+(state.s_faxno?' · 팩스 '+esc(state.s_faxno):'')+'</div></div>'+
+    '<div class="big"><span>합계금액 ('+(vatIn?"부가세 포함":"부가세 별도")+')</span><span>'+esc(toKorean(total))+' &nbsp; <b>₩'+comma(total)+'</b></span></div>'+
+    '<table><colgroup><col style="width:7%"><col style="width:33%"><col style="width:10%"><col style="width:8%"><col style="width:15%"><col style="width:16%"><col style="width:11%"></colgroup>'+
+    '<tr><th>No</th><th>품명</th><th>규격</th><th>수량</th><th>단가</th><th>금액</th><th>비고</th></tr>'+body+'</table>'+
+    '<div class="tot"><div><span>공급가액</span><span>₩'+comma(supply)+'</span></div><div><span>부가세</span><span>'+(vatIn?"₩"+comma(vat):"별도")+'</span></div><div><span>합계</span><span>₩'+comma(total)+'</span></div></div>'+
+    (nl.length?'<div class="nt"><b>참고사항</b><br>'+nl.map(function(l,i){return (i+1)+'. '+esc(l);}).join("<br>")+'</div>':'')+
+    '<div class="sign">'+stampify(state.s_name+' (인)')+'</div></div>';
+}
+function renderSheet5(){
+  var rows=itemCalc(), supply=0, tax=0;
+  var vatIn=state.vat==="in";
+  var body="", n=0;
+  rows.forEach(function(r){ var t=vatIn?Math.round(r.amt*0.1):0; supply+=r.amt; tax+=t; n++;
+    body+='<tr><td>'+n+'</td><td class="l">'+esc(String(r.it.name||"").replace(/\n/g," "))+'</td><td>'+esc(r.it.spec)+'</td><td>'+(r.it.qty?esc(r.it.qty):"")+'</td><td class="num">'+(r.p?comma(r.p):"")+'</td><td class="num">'+(r.amt?comma(r.amt):"")+'</td><td class="num">'+(vatIn?(t?comma(t):""):(r.amt?"별도":""))+'</td></tr>'; });
+  for(n=n+1;n<=12;n++) body+='<tr><td>'+n+'</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+  var total=supply+tax;
+  var nl=notesList();
+  $("sheet5").innerHTML='<div class="t5"><h2>견 적 서</h2>'+
+    '<div class="boxes"><table><tr><td class="vert" rowspan="4">공<br>급<br>받<br>는<br>자</td><td class="lab">상호</td><td style="font-weight:bold;font-size:11pt">'+esc(state.client||" ")+' 귀하</td></tr>'+
+      '<tr><td class="lab">견적일</td><td>'+esc(korDate(state.date))+'</td></tr>'+
+      '<tr><td class="lab">부가세</td><td>'+(vatIn?"포함":"별도")+'</td></tr>'+
+      '<tr><td colspan="2">아래와 같이 견적합니다.</td></tr></table>'+
+    '<table style="border-left:2px solid #000"><tr><td class="vert" rowspan="5">공<br>급<br>자</td><td class="lab">등록번호</td><td colspan="3">'+esc(state.s_reg)+'</td></tr>'+
+      '<tr><td class="lab">상호</td><td>'+esc(state.s_name)+'</td><td class="lab">성명</td><td>'+stampify(state.s_ceo)+'</td></tr>'+
+      '<tr><td class="lab">주소</td><td colspan="3">'+esc(state.s_addr)+'</td></tr>'+
+      '<tr><td class="lab">업태</td><td>'+esc(state.s_type)+'</td><td class="lab">종목</td><td>'+esc(state.s_item)+'</td></tr>'+
+      '<tr><td class="lab">연락처</td><td colspan="3">'+[state.s_tel,state.s_fax,state.s_faxno?("팩스 "+state.s_faxno):""].filter(Boolean).map(esc).join(" · ")+'</td></tr></table></div>'+
+    '<div class="sumline"><div>합계금액</div><div>'+esc(toKorean(total))+'</div><div>₩'+comma(total)+'</div></div>'+
+    '<table class="grid"><colgroup><col style="width:7%"><col style="width:33%"><col style="width:10%"><col style="width:8%"><col style="width:14%"><col style="width:15%"><col style="width:13%"></colgroup>'+
+    '<tr><th>번호</th><th>품명</th><th>규격</th><th>수량</th><th>단가</th><th>공급가액</th><th>세액</th></tr>'+body+
+    '<tr class="ft"><td colspan="5">합 계</td><td class="num">'+comma(supply)+'</td><td class="num">'+(vatIn?comma(tax):"별도")+'</td></tr></table>'+
+    (nl.length?'<div class="nt">'+nl.map(function(l){return "· "+esc(l);}).join("<br>")+'</div>':'')+'</div>';
+}
 function renderSheet3(){
   var g=function(k){ return num(state[k]); };
   var mat=g("c_mat"), imat=g("c_imat"), scrap=g("c_scrap"), lab=g("c_lab"), mach=g("c_mach");
@@ -503,13 +589,13 @@ function bindStatic(){
 var SAVES_KEY="cleanman-saves", delArm=null;
 function listSaves(){ try{ var a=JSON.parse(localStorage.getItem(SAVES_KEY)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
 function writeSaves(a){ try{ localStorage.setItem(SAVES_KEY,JSON.stringify(a)); return true; }catch(e){ return false; } }
-function currentTotalText(){ var id={rows:"sheet2",cost:"sheet3"}[state.tpl]; if(id){ var m=$(id).innerText.match(/₩\s?([\d,]+)/); return m?"₩"+m[1]:""; } return $("p_total").textContent.replace(/\s*\(.*\)$/,""); }
+function currentTotalText(){ var id=state.tpl==="basic"?null:SHEET_ID[state.tpl]; if(id){ var m=$(id).innerText.match(/₩\s?([\d,]+)/); return m?"₩"+m[1]:""; } return $("p_total").textContent.replace(/\s*\(.*\)$/,""); }
 function saveCurrent(){
   var name = state.tpl==="cost" ? (state.c_name||"") : (state.client||"");
   if(!name.trim()){ setStatus("받는 곳(원가계산서는 용역명)을 먼저 적어 주세요. 그 이름으로 저장돼요."); return; }
   var a=listSaves(), now=new Date();
   if(!state._id) state._id="e"+now.getTime();
-  var tplName={basic:"기본형",rows:"항목별형",cost:"원가계산서"}[state.tpl]||"";
+  var tplName={basic:"기본형",rows:"항목별형",cost:"원가계산서",simple:"간결형",split:"세액분리형"}[state.tpl]||"";
   var entry={id:state._id, title:name, tpl:tplName, total:currentTotalText(), date:state.date, savedAt:now.toISOString(), data:JSON.parse(JSON.stringify(state))};
   var i=a.findIndex(function(x){return x.id===entry.id;});
   if(i>=0) a[i]=entry; else a.unshift(entry);
@@ -567,7 +653,7 @@ function importSaves(e){
 function setStatus(t){ $("status").textContent=t||""; }
 async function makePdf(){
   var btn=$("btnPrint"); btn.disabled=true; setStatus("PDF 만드는 중…");
-  var id={rows:"sheet2",cost:"sheet3"}[state.tpl]||"sheet", sheet=$(id), wrap=sheet.parentNode;
+  var id=SHEET_ID[state.tpl]||"sheet", sheet=$(id), wrap=sheet.parentNode;
   var oldT=sheet.style.transform, oldH=wrap.style.height;
   try{
     if(document.fonts&&document.fonts.ready) await document.fonts.ready;
@@ -599,7 +685,7 @@ function syncVatNote(){
 }
 
 function fitPreview(){
-  var sheet=$({rows:"sheet2",cost:"sheet3"}[state.tpl]||"sheet"), wrap=sheet.parentNode;
+  var sheet=$(SHEET_ID[state.tpl]||"sheet"), wrap=sheet.parentNode;
   sheet.style.transform=""; wrap.style.height="";
   var avail=wrap.clientWidth, w=sheet.offsetWidth;
   if(avail<w){ var s=avail/w; sheet.style.transform="scale("+s+")"; sheet.style.transformOrigin="top left"; wrap.style.height=(sheet.offsetHeight*s)+"px"; }
